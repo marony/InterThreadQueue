@@ -16,4 +16,9 @@ BlockingQueueでの結果:
 Disruptorでの結果:  
 785 millis  
 
+テスト環境がSurface Pro 3なので微妙ですが、BlockingQueueで200万件/s、Disruptorで1000万件/sです。  
+
 Disruptor速いですね！！  
+
+公式だと2000万件/sくらいの結果です。  
+デスクトップPCでもそのくらい出たと思います。  
