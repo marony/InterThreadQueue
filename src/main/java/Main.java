@@ -10,13 +10,16 @@ public class Main {
     private final static int N = (int)Math.pow(2, 23);
     private final static long TIMEOUT = 1000L;
 
+    // Disruptor用データ保持クラス
     static class Holder { public int n = -1; }
+    // Disruptor用受信イベントハンドラ
     static class MyEventHandler implements EventHandler<Holder> {
         public volatile boolean finish = false;
         public int max = 0;
 
         @Override
         public void onEvent(Holder holder, long sequence, boolean endOfBatch) throws Exception {
+            // 受信処理
             if (holder.n < 0)
                 finish = true;
             if (holder.n > max)
@@ -32,6 +35,7 @@ public class Main {
             final BlockingQueue<Integer> blockingQueue = new LinkedBlockingDeque<>(N);
 
             long nanos = System.nanoTime();
+            // 受信処理
             CompletableFuture<Integer> future = CompletableFuture.supplyAsync(() -> {
                 int max = 0;
                 try {
@@ -50,10 +54,12 @@ public class Main {
                 return max;
             });
             try {
+                // 送信処理
                 for (int i = 0; i < N; ++i)
                     blockingQueue.put(i);
                 blockingQueue.put(-1);
 
+                // 受信スレッド終了待ち
                 int n = future.get();
                 System.out.println(String.format("BlockingQueue: %d millis",
                         TimeUnit.MILLISECONDS.convert(System.nanoTime() - nanos, TimeUnit.NANOSECONDS)));
@@ -75,6 +81,7 @@ public class Main {
 
             long nanos = System.nanoTime();
             try {
+                // 送信処理
                 for (int i = 0; i < N; ++i) {
                     final int j = i;
                     rootDisruptor.publishEvent((event, sequence) -> {
@@ -84,6 +91,8 @@ public class Main {
                 rootDisruptor.publishEvent((event, sequence) -> {
                     event.n = -1;
                 });
+
+                // 受信スレッド終了待ち
                 while (!eventHandler.finish)
                     Thread.yield();
 
